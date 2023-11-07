@@ -1,0 +1,25 @@
+USE MicrosoftDynamicsAX_Prod; -- Replace 'YourDatabaseName' with the actual name of your database
+
+-- List database files
+SELECT name, physical_name
+FROM sys.master_files
+WHERE database_id = DB_ID('MicrosoftDynamicsAX_Prod');
+
+
+
+USE MicrosoftDynamicsAX_Prod; -- Replace 'YourDatabaseName' with the actual name of your database
+
+-- Check the current size of the log file
+DBCC SQLPERF(LOGSPACE);
+
+-- Shrink the log file to the desired size (in MB)
+DBCC SHRINKFILE ('MicrosoftDynamicsAXUAT_log', 100);
+
+-- Check the log file size after shrinking
+DBCC SQLPERF(LOGSPACE);
+
+
+
+
+
+
