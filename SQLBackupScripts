@@ -1,0 +1,119 @@
+-- Set the database name
+DECLARE @DatabaseName NVARCHAR(255) = 'Paymax';
+
+-- Set the backup directory
+DECLARE @BackupDirectory NVARCHAR(255) = 'E:\ERPBackup\';
+
+-- Generate the backup file name with date and time
+DECLARE @BackupFileName NVARCHAR(255) = @BackupDirectory + @DatabaseName + '_' + CONVERT(NVARCHAR(20), GETDATE(), 112) + '_' + REPLACE(CONVERT(NVARCHAR(20), GETDATE(), 108), ':', '') + '.bak';
+
+-- Create the backup statement
+DECLARE @BackupScript NVARCHAR(MAX) = 
+    'BACKUP DATABASE [' + @DatabaseName + '] ' +
+    'TO DISK = N''' + @BackupFileName + ''' ' +
+    'WITH FORMAT, ' +
+    'MEDIANAME = N''SQLServerBackups'', ' +
+    'NAME = N''Full Backup of ' + @DatabaseName + '''';
+
+-- Execute the backup statement
+EXEC(@BackupScript);
+
+--------------------------------------------------------
+
+This script does the following:
+
+    Sets the database name to "Paymax".
+    Sets the backup directory to "E:\ERPBackup".
+    Generates a backup file name with the format "Paymax_Date_Time.bak".
+    Creates a dynamic SQL statement for the backup operation, including the database name, backup file path, and other options.
+    Executes the dynamic SQL statement to perform the backup.
+
+-------------------------------------------------------------------------
+
+Step 1: Create the SQL Backup Script
+
+Save the SQL backup script in a .sql file, for example, BackupScript.sql. The content of the file should be the SQL script provided in my previous response.
+
+Step 2: Create a Batch File
+
+Create a new text file with a .bat extension, for example, RunBackup.bat, and add the following content:
+
+
+@echo off
+sqlcmd -S YourServerName -d YourDatabaseName -U YourUsername -P YourPassword -i "C:\Path\To\BackupScript.sql"
+
+
+Replace the placeholders (YourServerName, YourDatabaseName, YourUsername, YourPassword, and "C:\Path\To\BackupScript.sql") with your actual SQL Server details and the path to your SQL backup script.
+
+Step 3: Test the Batch File
+
+Double-click the batch file (RunBackup.bat) to test if it runs successfully. This step ensures that the script is executing correctly outside of Task Scheduler.
+
+Step 4: Set Up Task Scheduler
+
+Now, you can set up a scheduled task to run the batch file at a specified interval. Here's a brief outline of the steps:
+
+    Open Task Scheduler on your server.
+    Click on "Create Basic Task" or "Create Task" in the right-hand Actions pane.
+    Follow the wizard to set up the task, specifying the name, description, trigger (schedule), and action (start a program).
+    In the "Action" settings, browse and select your batch file (RunBackup.bat).
+    Complete the wizard, and make sure to check the option to "Open the Properties dialog for this task when I click Finish."
+
+Step 5: Set Additional Task Scheduler Options (Optional)
+
+In the Properties dialog of the scheduled task, you may want to set options such as:
+
+    Setting the task to run with the highest privileges.
+    Configuring the task to run whether the user is logged on or not.
+    Configuring the task to stop if it runs longer than a specified time.
+
+These settings can be adjusted based on your specific requirements.
+
+That's it! The scheduled task will now execute your SQL backup script at the specified intervals using the batch file and Task Scheduler.
+
+---------------------------------------------------------------------------------------------
+
+o create a script that deletes backup files older than 2 days, you can use a combination of T-SQL and a batch script. Here's an example:
+
+Step 1: Create a T-SQL Script
+
+Create a T-SQL script that deletes backup files older than 2 days. Save it as DeleteOldBackups.sql:
+
+
+DECLARE @BackupDirectory NVARCHAR(255) = 'E:\ERPBackup\';
+
+-- Delete backup files older than 2 days
+EXEC xp_cmdshell 'del "' + @BackupDirectory + '*.bak" /Q';
+
+-- Delete backup files older than 2 days (assuming the filenames have a specific pattern)
+DECLARE @Pattern NVARCHAR(255) = @BackupDirectory + 'Paymax_*';
+DECLARE @OlderThanDate DATETIME = DATEADD(DAY, -2, GETDATE());
+DECLARE @DynamicCommand NVARCHAR(MAX) = 'FORFILES /P "' + @BackupDirectory + '" /M ' + @Pattern + ' /D -' + CONVERT(NVARCHAR(10), DATEDIFF(DAY, @OlderThanDate, GETDATE())) + ' /C "cmd /c del @file"';
+EXEC xp_cmdshell @DynamicCommand;
+
+
+----------------------------------------------------------------
+
+Step 2: Create a Batch File
+
+Create a batch file (DeleteOldBackups.bat) to execute the T-SQL script:
+
+@echo off
+sqlcmd -S YourServerName -d YourDatabaseName -U YourUsername -P YourPassword -i "C:\Path\To\DeleteOldBackups.sql"
+
+-----------------------------------------------------------------------------------------
+
+Replace the placeholders (YourServerName, YourDatabaseName, YourUsername, YourPassword, and "C:\Path\To\DeleteOldBackups.sql") with your actual SQL Server details and the path to your T-SQL script.
+
+Step 3: Test the Batch File
+
+Double-click the batch file (DeleteOldBackups.bat) to test if it runs successfully.
+
+Step 4: Schedule the Batch File in Task Scheduler
+
+Follow the same steps outlined in the previous response to set up a scheduled task in Task Scheduler. This time, use the batch file (DeleteOldBackups.bat) as the program to run.
+
+This scheduled task will execute the T-SQL script to delete backup files older than 2 days at the specified intervals. Adjust the paths and server details according to your environment.
+
+
+
