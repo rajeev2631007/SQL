@@ -1,0 +1,98 @@
+@echo off
+
+REM ================================
+REM SQL Server Database Backup Script
+REM ================================
+REM Author: [Your Name/Team]
+REM Purpose: Automate SQL Server database backup and cleanup old backup files
+REM ================================
+
+REM Set variables for configuration
+SET BackupPath=F:\AX_BACKUP
+SET ServerName=YourServerName
+SET DatabaseName=YourDatabaseName
+SET Username=YourUsername
+SET Password=YourPassword
+
+REM Generate a dynamic filename for the backup
+REM Format: DatabaseName_YYYY-MM-DD_HH-MM-SS.bak
+FOR /F "tokens=1-4 delims=:. " %%a IN ("%DATE% %TIME%") DO SET DateTime=%%a-%%b-%%c_%%d
+SET BackupFileName=%DatabaseName%_%DateTime%.bak
+SET FullBackupPath=%BackupPath%\%BackupFileName%
+
+REM ================================
+REM Step 1: Perform SQL Server Backup
+REM ================================
+
+REM Inform user of backup initiation
+ECHO Starting backup for database: %DatabaseName%
+
+sqlcmd -S %ServerName% -U %Username% -P %Password% -Q "BACKUP DATABASE [%DatabaseName%] TO DISK = N'%FullBackupPath%' WITH FORMAT, INIT, NAME = N'Backup of %DatabaseName%'"
+
+IF ERRORLEVEL 1 (
+    ECHO ERROR: Backup operation failed. Check SQL Server logs for details.
+    EXIT /B 1
+) ELSE (
+    ECHO Backup completed successfully: %FullBackupPath%
+)
+
+REM ================================
+REM Step 2: Delete Backup Files Older Than 3 Days
+REM ================================
+
+ECHO Deleting backup files older than 3 days in: %BackupPath%
+
+forfiles /p "%BackupPath%" /s /m *.bak /d -3 /c "cmd /c del @path"
+
+IF ERRORLEVEL 1 (
+    ECHO WARNING: Cleanup operation encountered an error. Check the folder permissions.
+) ELSE (
+    ECHO Cleanup completed. Old backup files deleted.
+)
+
+REM ================================
+REM Final Step: Confirmation
+REM ================================
+
+ECHO Backup and cleanup process completed.
+EXIT /B 0
+
+
+---------------------------------------------------------------------------------------
+
+Key Features of the Script:
+
+    Variables for Configuration:
+        BackupPath: Folder where backup files are stored.
+        ServerName: SQL Server instance name.
+        DatabaseName: The database to back up.
+        Username and Password: SQL Server credentials.
+
+    Dynamic Backup File Naming:
+        Includes the database name and timestamp (e.g., DatabaseName_2024-12-05_12-30-45.bak).
+
+    Error Handling:
+        Checks for errors during the backup and cleanup process.
+        Provides warnings if cleanup fails.
+
+    Forfiles for Cleanup:
+        Deletes .bak files older than 3 days in the backup directory.
+
+    User-Friendly Output:
+        Clear messages at each stage of the script for ease of troubleshooting.
+
+How to Use:
+
+    Replace Variables:
+        Replace YourServerName, YourDatabaseName, YourUsername, and YourPassword with the actual details.
+
+    Schedule Using Task Scheduler:
+        Save this script as backup_and_cleanup.bat.
+        Schedule it using Windows Task Scheduler to run at the desired time.
+
+    Testing:
+        Test the script manually before scheduling to ensure it behaves as expected.
+
+    Permissions:
+        Ensure the SQL Server user has permission to back up the database.
+        Verify the script has permissions to write to the backup directory and delete files.
